@@ -1,15 +1,15 @@
 var scene, camera, renderer;
 var material;
-var player, knife, ground, mesh1, mesh2;
+var player, knife, ground, mesh1, mesh2, mesh3;
 var fog;
-var ambientLight, hemisphereLight, directionalLight, spotLight;
+var ambientLight, hemisphereLight, areaLight1, areaLight2, areaLight3, directionalLight, spotLight;
 
 init();
 animate();
 
 function init() {
 
-    renderer = new THREE.WebGLRenderer({ antialiasing: true });
+    renderer = new THREE.WebGLDeferredRenderer({ antialiasing: true });
     renderer.shadowMapEnabled = true;
     renderer.shadowMapCullFrontFaces = true;
     renderer.shadowMapSoft = true;
@@ -43,26 +43,31 @@ function init() {
 
     scene.add( player );
 
-    ground = new THREE.Mesh( new THREE.PlaneGeometry( 1000, 600 ), material );
+    ground = new THREE.Mesh( new THREE.PlaneGeometry( 1600, 800 ), material );
+    ground.position.z = 200;
     ground.rotation.x = -Math.PI/2;
     ground.receiveShadow = true;
     scene.add( ground );
 
-    mesh1 = new THREE.Mesh( new THREE.BoxGeometry( 100, 40, 100 ), material );
-    mesh1.position.x = -150;
-    mesh1.position.y = 20;
-    mesh1.position.z = 100;
+    mesh1 = new THREE.Mesh( new THREE.BoxGeometry( 400, 200, 100 ), material );
+    mesh1.position.set( -200, 300, -150 );
+    mesh1.rotation.y = -Math.PI/6;
     mesh1.castShadow = true;
     mesh1.receiveShadow = true;
     scene.add( mesh1 );
 
-    mesh2 = new THREE.Mesh( new THREE.BoxGeometry( 100, 200, 100 ), material );
-    mesh2.position.x = 150;
-    mesh2.position.y = 100;
-    mesh2.position.z = -100;
+    mesh2 = new THREE.Mesh( new THREE.BoxGeometry( 100, 400, 100 ), material );
+    mesh2.position.set( 0, 400, -30 );
     mesh2.castShadow = true;
     mesh2.receiveShadow = true;
     scene.add( mesh2 );
+
+    mesh3 = new THREE.Mesh( new THREE.BoxGeometry( 400, 200, 100 ), material );
+    mesh3.position.set( 200, 300, -150 );
+    mesh3.rotation.y = Math.PI/6;
+    mesh3.castShadow = true;
+    mesh3.receiveShadow = true;
+    scene.add( mesh3 );
 
     // Fog
 
@@ -77,7 +82,31 @@ function init() {
     ambientLight = new THREE.AmbientLight( 0x010612 );
     scene.add( ambientLight );
 
-    directionalLight = new THREE.DirectionalLight( 0x4779B3, 0.05 );
+// ? http://jsfiddle.net/Us54P/
+
+    areaLight1 = new THREE.AreaLight( 0xffffff, 3.5 );
+    areaLight1.position.set( 0.0001, 101.0001, 51.0001 );
+    areaLight1.rotation.set( Math.PI/2, 0.0001, Math.PI*1.75 );
+    areaLight1.width = 400;
+    areaLight1.height = 200;
+    scene.add( areaLight1 );
+
+    areaLight2 = new THREE.AreaLight( 0xd2c789, 4 );
+    areaLight2.position.set( 0, 0, 51 );
+    areaLight2.rotation.set( 0, 0, 0 );
+    areaLight2.width = 100;
+    areaLight2.height = 400;
+    //mesh2.add( areaLight2 );
+
+    areaLight3 = new THREE.AreaLight( 0xd2c789, 4 );
+    areaLight3.position.set( 0, 0, 51 );
+    areaLight3.rotation.set( 0, 0, 0 );
+    areaLight3.width = 400;
+    areaLight3.height = 200;
+    //mesh3.add( areaLight3 );
+
+    //directionalLight = new THREE.DirectionalLight( 0x4779B3, 0.075 );
+    directionalLight = new THREE.DirectionalLight( 0x4779B3, 0.3 );
     directionalLight.position.set( -1.5, 1, -1.25 );
     directionalLight.position.multiplyScalar( 500 );
 
