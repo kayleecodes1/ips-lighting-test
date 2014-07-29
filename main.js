@@ -5,7 +5,6 @@ var fog;
 var ambientLight, hemisphereLight, directionalLight, spotLight;
 
 init();
-animate();
 
 function init() {
 
@@ -74,10 +73,10 @@ function init() {
     //hemisphereLight = new THREE.HemisphereLight( 0x295485, 0x162536, 0.2 );
     //scene.add( hemisphereLight );
 
-    ambientLight = new THREE.AmbientLight( 0x010612 );
+    ambientLight = new THREE.AmbientLight( 0x333333 );
     scene.add( ambientLight );
 
-    directionalLight = new THREE.DirectionalLight( 0x4779B3, 0.05 );
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 0.3 );
     directionalLight.position.set( -1.5, 1, -1.25 );
     directionalLight.position.multiplyScalar( 500 );
 
@@ -108,9 +107,21 @@ function init() {
     //scene.add( spotLight );
 
     document.body.appendChild( renderer.domElement );
-
 }
-var knifeTimer = -1;
+
+var lastUpdate;
+var startJump;
+var isJumping = false;
+var yVel = 0;
+
+var MOVE_SPEED = 6.0;
+var JUMP_ACCELERATION = 1;
+var MIN_JUMP_TIME = 75;
+var MAX_JUMP_TIME = 200;
+var GRAVITY_ACCELERATION = 2.0;
+var GROUND_HEIGHT = 80;
+
+animate();
 function animate() {
 
     var now = Date.now();
@@ -118,33 +129,55 @@ function animate() {
     requestAnimationFrame( animate );
     
     // Key input
-
     Input.Key.update();
 
+    // Movement
+    var xVel = 0,
+        zVel = 0;
     if( Input.Key.isPressed('left arrow') || Input.Key.isPressed('a') ) {
-        player.position.x -= 3.0;
-        player.rotation.y = -Math.PI/2;
+        xVel -= 1;
     }
     if( Input.Key.isPressed('right arrow') || Input.Key.isPressed('d') ) {
-        player.position.x += 3.0;
-        player.rotation.y = Math.PI/2;
+        xVel += 1;
     }
     if( Input.Key.isPressed('up arrow') || Input.Key.isPressed('w') ) {
-        player.position.z -= 3.0;
-        player.rotation.y = Math.PI;
+        zVel -= 1;
     }
     if( Input.Key.isPressed('down arrow') || Input.Key.isPressed('s') ) {
-        player.position.z += 3.0;
-        player.rotation.y = 0;
+        zVel += 1;
     }
+    var newDirection = new THREE.Vector3( xVel, 0, zVel );
+    newDirection.normalize();
+    newDirection.multiplyScalar( MOVE_SPEED );
+    player.position.add( newDirection );
+    player.lookAt( new THREE.Vector3(
+        player.position.x + newDirection.x,
+        player.position.y + newDirection.y,
+        player.position.z + newDirection.z
+    ));
 
-    if( Input.Key.justPressed('space') && knifeTimer < 0 ) {
-        knife.visible = true;
-        knifeTimer = 1000;
-    } else if( knifeTimer > -1 ) {
-        knifeTimer -= ( now - ( lastUpdate || now ) );
+    // Gravity / Jumping
+    if( Input.Key.justPressed('space') && player.position.y === GROUND_HEIGHT ) {
+        startJump = now;
+        isJumping = true;
+        yVel += 1.75;
+    // Enforce minimum jump time
+    } else if( isJumping && player.position.y > 80 && now - startJump <= MIN_JUMP_TIME ) {
+        yVel += 1.75;
+    // Increase up to maximum jump time
+    } else if( Input.Key.isPressed('space') && isJumping && player.position.y > GROUND_HEIGHT && now - startJump <= MAX_JUMP_TIME ) {
+        yVel += JUMP_ACCELERATION;
     } else {
-        knife.visible = false;
+        yVel -= GRAVITY_ACCELERATION;
+        isJumping = false;
+    }
+    // Update y position
+    player.position.y += yVel;
+    // Fix position
+    if( player.position.y <= 80 ) {
+        isJumping = false;
+        player.position.y = 80;
+        yVel = 0;
     }
 
     // Light pulse
