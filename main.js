@@ -111,13 +111,15 @@ function init() {
 
 var lastUpdate;
 var startJump;
+var isSprinting = false;
 var isJumping = false;
 var yVel = 0;
 
-var MOVE_SPEED = 6.0;
-var JUMP_ACCELERATION = 1;
-var MIN_JUMP_TIME = 75;
-var MAX_JUMP_TIME = 200;
+var MOVE_SPEED = 8.0;
+var SPRINT_SPEED = 12.0;
+var JUMP_SPEED = 16.0;
+var MIN_JUMP_TIME = 0;
+var MAX_JUMP_TIME = 150;
 var GRAVITY_ACCELERATION = 2.0;
 var GROUND_HEIGHT = 80;
 
@@ -146,9 +148,18 @@ function animate() {
     if( Input.Key.isPressed('down arrow') || Input.Key.isPressed('s') ) {
         zVel += 1;
     }
+
     var newDirection = new THREE.Vector3( xVel, 0, zVel );
     newDirection.normalize();
-    newDirection.multiplyScalar( MOVE_SPEED );
+
+    // Sprint
+    if( Input.Key.isPressed('shift') && !isJumping ) {
+        isSprinting = true;
+    } else {
+        isSprinting = false;
+    }
+    //TODO:transition between movement speeds
+    newDirection.multiplyScalar( isSprinting ? SPRINT_SPEED : MOVE_SPEED );
     player.position.add( newDirection );
     player.lookAt( new THREE.Vector3(
         player.position.x + newDirection.x,
@@ -160,13 +171,13 @@ function animate() {
     if( Input.Key.justPressed('space') && player.position.y === GROUND_HEIGHT ) {
         startJump = now;
         isJumping = true;
-        yVel += 1.75;
+        yVel = JUMP_SPEED;
     // Enforce minimum jump time
     } else if( isJumping && player.position.y > 80 && now - startJump <= MIN_JUMP_TIME ) {
-        yVel += 1.75;
+        //yVel += JUMP_ACCELERATION;
     // Increase up to maximum jump time
     } else if( Input.Key.isPressed('space') && isJumping && player.position.y > GROUND_HEIGHT && now - startJump <= MAX_JUMP_TIME ) {
-        yVel += JUMP_ACCELERATION;
+        //yVel += JUMP_ACCELERATION;
     } else {
         yVel -= GRAVITY_ACCELERATION;
         isJumping = false;
