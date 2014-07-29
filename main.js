@@ -1,16 +1,21 @@
 var scene, camera, renderer;
 var material;
 var player, knife, ground, mesh1, mesh2;
-var directionalLight, spotLight, ambientLight;
+var fog;
+var ambientLight, hemisphereLight, directionalLight, spotLight;
 
 init();
 animate();
 
 function init() {
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({ antialiasing: true });
     renderer.shadowMapEnabled = true;
+    renderer.shadowMapCullFrontFaces = true;
     renderer.shadowMapSoft = true;
+    //renderer.gammaInput = true;
+    //renderer.gammaOutput = true;
+    renderer.physicallyBasedShading = true;
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     scene = new THREE.Scene();
@@ -21,7 +26,7 @@ function init() {
     camera.position.z = 750;
     camera.lookAt( new THREE.Vector3( 0, 150, 0 ) );
 
-    material = new THREE.MeshLambertMaterial( { color: 0xffffff } );
+    material = new THREE.MeshLambertMaterial( { color: 0xffffff, ambient: 0xffffff, overdraw: true } );
 
     // Meshes
 
@@ -30,10 +35,10 @@ function init() {
     player.castShadow = true;
     player.receiveShadow = true;
 
-    knife = new THREE.Mesh( new THREE.BoxGeometry( 50, 5, 5 ), material );
-    knife.x = 35;
-    knife.y = 80;
-    //knife.visible = false;
+    knife = new THREE.Mesh( new THREE.BoxGeometry( 20, 20, 80 ), material );
+    knife.position.z = 35;
+    knife.position.y = 0;
+    knife.visible = false;
     player.add( knife );
 
     scene.add( player );
@@ -59,17 +64,35 @@ function init() {
     mesh2.receiveShadow = true;
     scene.add( mesh2 );
 
-    // Lights
+    // Fog
 
-    directionalLight = new THREE.DirectionalLight( 0x32388f, 0.15 );
-    directionalLight.position.x = -1000;
-    directionalLight.position.y = 1000;
-    directionalLight.position.z = -1000;
-    directionalLight.target.position.x = 1000;
-    directionalLight.target.position.y = -1000;
-    directionalLight.target.position.z = 1000;
+    fog = new THREE.Fog( 0x020B1f, 1, 3000 );
+    //scene.add( fog );
+
+    // Light
+
+    //hemisphereLight = new THREE.HemisphereLight( 0x295485, 0x162536, 0.2 );
+    //scene.add( hemisphereLight );
+
+    ambientLight = new THREE.AmbientLight( 0x010612 );
+    scene.add( ambientLight );
+
+    directionalLight = new THREE.DirectionalLight( 0x4779B3, 0.05 );
+    directionalLight.position.set( -1.5, 1, -1.25 );
+    directionalLight.position.multiplyScalar( 500 );
+
     directionalLight.castShadow = true;
-    directionalLight.shadowDarkness = 0.1;
+    directionalLight.shadowMapWidth = 2048;
+    directionalLight.shadowMapHeight = 2048;
+    var d = 500;
+    directionalLight.shadowCameraLeft = -d;
+    directionalLight.shadowCameraRight = d;
+    directionalLight.shadowCameraTop = d;
+    directionalLight.shadowCameraBottom = -d;
+    directionalLight.shadowCameraFar = 3500;
+    directionalLight.shadowBias = -0.0001;
+    directionalLight.shadowDarkness = 0.35;
+    //directionalLight.shadowCameraVisible = true;
     scene.add( directionalLight );
 
     spotLight = new THREE.SpotLight( 0xffffff, 1.0, 0.0, Math.PI/3 );
@@ -82,10 +105,7 @@ function init() {
     spotLight.castShadow = true;
     spotLight.shadowDarkness = 0.7;
     spotLight.shadowCameraVisible = true;
-    scene.add( spotLight );
-
-    ambientLight = new THREE.AmbientLight( 0x060621 );
-    //scene.add( ambientLight );
+    //scene.add( spotLight );
 
     document.body.appendChild( renderer.domElement );
 
@@ -103,15 +123,19 @@ function animate() {
 
     if( Input.Key.isPressed('left arrow') || Input.Key.isPressed('a') ) {
         player.position.x -= 3.0;
+        player.rotation.y = -Math.PI/2;
     }
     if( Input.Key.isPressed('right arrow') || Input.Key.isPressed('d') ) {
         player.position.x += 3.0;
+        player.rotation.y = Math.PI/2;
     }
     if( Input.Key.isPressed('up arrow') || Input.Key.isPressed('w') ) {
         player.position.z -= 3.0;
+        player.rotation.y = Math.PI;
     }
     if( Input.Key.isPressed('down arrow') || Input.Key.isPressed('s') ) {
         player.position.z += 3.0;
+        player.rotation.y = 0;
     }
 
     if( Input.Key.justPressed('space') && knifeTimer < 0 ) {
